@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chữ & Trái Tim Rơi 3D Có Xoay</title>
+
+    <style>
+        /* ----------------------------------
+            1. BODY + PERSPECTIVE + NỀN ĐEN
+    ---------------------------------- */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* Không cho cuộn */
+            background: #000;
+            /* Nền đen */
+            height: 100vh;
+            perspective: 600px;
+            /* Tạo không gian 3D */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+            /* Tắt zoom/pinch mặc định */
+        }
+
+        /* ----------------------------------
+            2. SCENE chứa tất cả phần tử 3D
+    ---------------------------------- */
+        .scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            /* Cho phép con cháu 3D */
+            /* Ban đầu, sẽ để góc nghiêng mặc định, nhưng JS sẽ cập nhật lại */
+            transform: rotateX(20deg) rotateY(0deg);
+            transition: transform 0.1s ease-out;
+        }
+
+        /* ----------------------------------
+            3. TẤT CẢ phần tử rơi (chữ & trái tim)
+    ---------------------------------- */
+        .falling-item {
+            position: absolute;
+            top: -80px;
+            /* Đặt bắt đầu phía trên */
+            left: 50%;
+            white-space: nowrap;
+            pointer-events: none;
+            /* Không chặn sự kiện chuột/chạm */
+            user-select: none;
+            transform-origin: center center;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        /* ----------------------------------
+            4. CHỮ “YÊU THƯƠNG” (falling-word)
+    ---------------------------------- */
+        .falling-word {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow:
+                0 0 5px rgba(255, 182, 193, 0.8),
+                0 0 10px rgba(255, 105, 180, 0.7);
+            /* Glow hồng */
+            animation-name: fallWord, colorCycle;
+            /* Thời gian animation sẽ do JS gán */
+            /* Chú ý: fallWord chịu translateY + translateZ,
+                 colorCycle chịu chuyển màu liên tục */
+        }
+
+        /* ----------------------------------
+            5. TRÁI TIM ĐỎ (falling-heart)
+    ---------------------------------- */
+        .falling-heart {
+            font-size: 2rem;
+            color: #f00;
+            text-shadow:
+                0 0 5px rgba(255, 0, 0, 0.9),
+                0 0 10px rgba(255, 69, 0, 0.7);
+            /* Glow đỏ */
+            animation-name: fallHeart;
+            /* Duration do JS gán */
+            /* Khi rơi, sẽ scale nhỏ dần và mờ */
+        }
+
+        /* ----------------------------------
+            6. KEYFRAMES: CHỮ “YÊU THƯƠNG” RƠI
+    ---------------------------------- */
+        @keyframes fallWord {
+            0% {
+                transform: translate3d(0, 0, var(--init-z)) rotateX(0deg) rotateY(0deg);
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate3d(0, 120vh, var(--init-z)) rotateX(0deg) rotateY(0deg);
+                opacity: 0;
+            }
+        }
+
+        /* ----------------------------------
+            7. KEYFRAMES: CHUYỂN MÀU CHO CHỮ
+    ---------------------------------- */
+        @keyframes colorCycle {
+            0% {
+                color: #ffc0cb;
+            }
+
+            /* hồng nhạt */
+            25% {
+                color: #ffb6c1;
+            }
+
+            /* hồng tươi */
+            50% {
+                color: #ffe4e1;
+            }
+
+            /* hồng phớt trắng */
+            75% {
+                color: #ffd1dc;
+            }
+
+            /* hồng ấm */
+            100% {
+                color: #ffc0cb;
+            }
+        }
+
+        /* ----------------------------------
+            8. KEYFRAMES: TRÁI TIM ĐỎ RƠI
+    ---------------------------------- */
+        @keyframes fallHeart {
+            0% {
+                transform: translate3d(0, 0, var(--init-z)) scale(1);
+                opacity: 1;
+            }
+
+            70% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate3d(0, 110vh, var(--init-z)) scale(0.5);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scene" id="scene"></div>
+
+    <script>
+        /* ----------------------------------
+            1. MẢNG CHỨ VÀ TRÁI TIM
+        ---------------------------------- */
+        const words = [
+            "Yêu em mãi mãi",
+            "Anh nhớ em",
+            "Đừng nói là 5 năm, 10 năm hay 20 năm, anh cũng sẽ không quên em",
+            "Anh nhớ em từng giây",
+            "Sin",
+            "Trái tim anh chỉ có em",
+            "Gửi trái tim này cho em",
+            "Em là cuộc sống của anh",
+            "Yêu em vô bờ bến",
+            "Hạnh phúc khi có em",
+            "Em là duy nhất của đời anh",
+            "Mỗi ngày bên em là hạnh phúc",
+            "Anh nguyện mãi bên em",
+            "Em như ngôi sao sáng",
+            "Yêu em hơn cả bầu trời",
+            "Mỗi hơi thở vì em",
+            "Nguyện giữ em bên đời",
+            "Em là mơ ước ngọt ngào",
+            "Tình yêu của anh dành cho em",
+            "Mỗi nụ cười là ánh dương",
+            "Anh chỉ cần có em thôi",
+            "Gửi em điều ấm áp nhất",
+            "Yêu em hơn cả cuộc đời"
+        ];
+        const scene = document.getElementById("scene");
+        let screenWidth = window.innerWidth;
+        let screenHeight = window.innerHeight;
+
+        /* ----------------------------------
+            2. TẠO MỘT CHỮ RƠI
+        ---------------------------------- */
+        function createFallingWord() {
+            const text = words[Math.floor(Math.random() * words.length)];
+            const el = document.createElement("div");
+            el.classList.add("falling-item", "falling-word");
+            el.textContent = text;
+
+            // Chọn độ sâu Z ngẫu nhiên: từ -800 → +800
+            const initZ = Math.random() * 1600 - 800;
+            el.style.setProperty('--init-z', `${initZ}px`);
+
+            // Tính vị trí X sao cho không bị tràn ra mép
+            const approxWidth = text.length * 16; // ước tính 16px mỗi ký tự
+            const randomX = Math.random() * (screenWidth - approxWidth);
+            el.style.left = `${randomX}px`;
+
+            // Thời gian rơi: 3s → 5s
+            const duration = Math.random() * 2 + 3;
+            // Gán animation-duration cho cả hai animation (fallWord và colorCycle)
+            el.style.animationDuration = `${duration}s, ${duration}s`;
+
+            scene.appendChild(el);
+
+            // Xóa phần tử sau khi animation kết thúc (duration + 200ms)
+            setTimeout(() => {
+                if (scene.contains(el)) scene.removeChild(el);
+            }, duration * 1000 + 200);
+        }
+
+        /* ----------------------------------
+            3. TẠO MỘT TRÁI TIM RƠI
+        ---------------------------------- */
+        function createFallingHeart() {
+            const el = document.createElement("div");
+            el.classList.add("falling-item", "falling-heart");
+            el.textContent = "❤️";
+
+            // Độ sâu Z ngẫu nhiên
+            const initZ = Math.random() * 1600 - 800;
+            el.style.setProperty('--init-z', `${initZ}px`);
+
+            // Vị trí X ngẫu nhiên (giới hạn 30px rộng cho trái tim)
+            const randomX = Math.random() * (screenWidth - 30);
+            el.style.left = `${randomX}px`;
+
+            // Thời gian rơi: 2.5s → 4s (hơi nhanh hơn chữ)
+            const duration = Math.random() * 1.5 + 2.5;
+            el.style.animationDuration = `${duration}s`;
+
+            scene.appendChild(el);
+
+            setTimeout(() => {
+                if (scene.contains(el)) scene.removeChild(el);
+            }, duration * 1000 + 200);
+        }
+
+        /* ----------------------------------
+            4. KHỞI ĐỘNG RƠI & RƠI DÀNH CHO CHUỘT/TOUCH
+        ---------------------------------- */
+        let currentRotX = 20;  // Góc nghiêng X mặc định (20° nhìn xéo)
+        let currentRotY = 0;
+        let isDragging = false;
+        let lastX = 0, lastY = 0;
+
+        function applySceneTransform() {
+            scene.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
+        }
+
+        function onPointerDown(x, y) {
+            isDragging = true;
+            lastX = x;
+            lastY = y;
+        }
+        function onPointerMove(x, y) {
+            if (!isDragging) return;
+            const deltaX = x - lastX;
+            const deltaY = y - lastY;
+            lastX = x;
+            lastY = y;
+
+            // 1px di chuyển → 0.2° xoay
+            currentRotY += deltaX * 0.2;
+            currentRotX -= deltaY * 0.2;
+
+            // Giới hạn góc X giữa -45° và +45°
+            if (currentRotX > 45) currentRotX = 45;
+            if (currentRotX < -45) currentRotX = -45;
+
+            applySceneTransform();
+        }
+        function onPointerUp() {
+            isDragging = false;
+        }
+
+        function startFalling() {
+            // Ban đầu tạo 80 chữ, mỗi chữ delay 100ms
+            for (let i = 0; i < 80; i++) {
+                setTimeout(createFallingWord, i * 100);
+            }
+            // Sau đó mỗi 100ms tạo thêm 1 chữ
+            setInterval(createFallingWord, 100);
+
+            // Ban đầu tạo 40 trái tim, mỗi trái tim delay 300ms
+            for (let i = 0; i < 40; i++) {
+                setTimeout(createFallingHeart, i * 300);
+            }
+            // Sau đó mỗi 500ms tạo thêm 1 trái tim
+            setInterval(createFallingHeart, 500);
+        }
+
+        // 1. Gắn sự kiện chuột
+        window.addEventListener("mousedown", (e) => {
+            onPointerDown(e.clientX, e.clientY);
+        });
+        window.addEventListener("mousemove", (e) => {
+            onPointerMove(e.clientX, e.clientY);
+        });
+        window.addEventListener("mouseup", () => {
+            onPointerUp();
+        });
+
+        // 2. Gắn sự kiện touch cho điện thoại
+        window.addEventListener("touchstart", (e) => {
+            if (e.touches.length === 1) {
+                const t = e.touches[0];
+                onPointerDown(t.clientX, t.clientY);
+            }
+        }, { passive: false });
+        window.addEventListener("touchmove", (e) => {
+            if (e.touches.length === 1) {
+                const t = e.touches[0];
+                onPointerMove(t.clientX, t.clientY);
+            }
+        }, { passive: false });
+        window.addEventListener("touchend", () => {
+            onPointerUp();
+        });
+
+        // 3. Cập nhật kích thước khi resize
+        window.addEventListener("resize", () => {
+            screenWidth = window.innerWidth;
+            screenHeight = window.innerHeight;
+        });
+
+        // 4. Khi trang load
+        window.addEventListener("load", () => {
+            applySceneTransform();  // Áp lại transform khởi tạo (20°,0°)
+            startFalling();
+        });
+    </script>
+</body>
+
+</html>
