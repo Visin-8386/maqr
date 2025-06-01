@@ -4,12 +4,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Cho phép responsive trên điện thoại -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chữ & Trái Tim Rơi 3D Có Xoay</title>
+    <title>Chữ & Trái Tim Rơi 3D (Phủ Kín Màn)</title>
 
     <style>
         /* ----------------------------------
-            1. BODY + PERSPECTIVE + NỀN ĐEN
+        1. BODY + PERSPECTIVE + NỀN ĐEN
     ---------------------------------- */
         body {
             margin: 0;
@@ -23,31 +24,38 @@
             /* Tạo không gian 3D */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             touch-action: none;
-            /* Tắt zoom/pinch mặc định */
+            /* Tắt pinch/zoom mặc định */
         }
 
         /* ----------------------------------
-            2. SCENE chứa tất cả phần tử 3D
+        2. SCENE chứa tất cả phần tử 3D
     ---------------------------------- */
         .scene {
             position: relative;
             width: 100%;
             height: 100%;
             transform-style: preserve-3d;
-            /* Cho phép con cháu 3D */
-            /* Ban đầu, sẽ để góc nghiêng mặc định, nhưng JS sẽ cập nhật lại */
-            transform: rotateX(20deg) rotateY(0deg);
+            /* Góc nhìn ban đầu: nghiêng X 15°, xoay Y +20° (từ bên phải qua) */
+            transform: rotateX(15deg) rotateY(20deg);
             transition: transform 0.1s ease-out;
         }
 
+        /* Khi màn hình nhỏ (mobile), tăng nghiêng X và giảm xoay Y để phù hợp */
+        @media (max-width: 600px) {
+            .scene {
+                transform: rotateX(20deg) rotateY(15deg);
+            }
+        }
+
         /* ----------------------------------
-            3. TẤT CẢ phần tử rơi (chữ & trái tim)
+        3. TẤT CẢ phần tử rơi (chữ & trái tim)
     ---------------------------------- */
         .falling-item {
             position: absolute;
-            top: -80px;
-            /* Đặt bắt đầu phía trên */
+            /* Đặt ngang tại chính giữa của .scene */
             left: 50%;
+            top: 0;
+            /* Điểm gốc Y = 0 (tức đỉnh của scene) */
             white-space: nowrap;
             pointer-events: none;
             /* Không chặn sự kiện chuột/chạm */
@@ -58,7 +66,7 @@
         }
 
         /* ----------------------------------
-            4. CHỮ “YÊU THƯƠNG” (falling-word)
+        4. CHỮ “YÊU THƯƠNG” (falling-word)
     ---------------------------------- */
         .falling-word {
             font-size: 1.5rem;
@@ -68,13 +76,18 @@
                 0 0 10px rgba(255, 105, 180, 0.7);
             /* Glow hồng */
             animation-name: fallWord, colorCycle;
-            /* Thời gian animation sẽ do JS gán */
-            /* Chú ý: fallWord chịu translateY + translateZ,
-                 colorCycle chịu chuyển màu liên tục */
+            /* animation-duration sẽ do JS gán */
+        }
+
+        /* Thu nhỏ chữ trên mobile */
+        @media (max-width: 600px) {
+            .falling-word {
+                font-size: 1.2rem;
+            }
         }
 
         /* ----------------------------------
-            5. TRÁI TIM ĐỎ (falling-heart)
+        5. TRÁI TIM ĐỎ (falling-heart)
     ---------------------------------- */
         .falling-heart {
             font-size: 2rem;
@@ -84,31 +97,45 @@
                 0 0 10px rgba(255, 69, 0, 0.7);
             /* Glow đỏ */
             animation-name: fallHeart;
-            /* Duration do JS gán */
-            /* Khi rơi, sẽ scale nhỏ dần và mờ */
+            /* animation-duration sẽ do JS gán */
+        }
+
+        /* Thu nhỏ tim trên mobile */
+        @media (max-width: 600px) {
+            .falling-heart {
+                font-size: 1.6rem;
+            }
         }
 
         /* ----------------------------------
-            6. KEYFRAMES: CHỮ “YÊU THƯƠNG” RƠI
+        6. KEYFRAMES: CHỮ “YÊU THƯƠNG” RƠI TỪ NGOÀI TRỜI
+        — X, Z cố định, chỉ Y thay đổi từ -150vh → +150vh
     ---------------------------------- */
         @keyframes fallWord {
             0% {
-                transform: translate3d(0, 0, var(--init-z)) rotateX(0deg) rotateY(0deg);
+                /* Xuất phát hẳn ngoài màn hình phía trên (-150vh) 
+           ở X = var(--init-x), Z = var(--init-z). */
+                transform: translate3d(var(--init-x),
+                        -150vh,
+                        var(--init-z)) rotateX(0deg) rotateY(0deg);
                 opacity: 1;
             }
 
-            90% {
+            70% {
                 opacity: 1;
             }
 
             100% {
-                transform: translate3d(0, 120vh, var(--init-z)) rotateX(0deg) rotateY(0deg);
+                /* Rơi qua đáy (y = +150vh) tại cùng X, Z cũ */
+                transform: translate3d(var(--init-x),
+                        150vh,
+                        var(--init-z)) rotateX(0deg) rotateY(0deg);
                 opacity: 0;
             }
         }
 
         /* ----------------------------------
-            7. KEYFRAMES: CHUYỂN MÀU CHO CHỮ
+        7. KEYFRAMES: CHUYỂN MÀU CHO CHỮ
     ---------------------------------- */
         @keyframes colorCycle {
             0% {
@@ -120,7 +147,7 @@
                 color: #ffb6c1;
             }
 
-            /* hồng tươi */
+            /* hồng tươi  */
             50% {
                 color: #ffe4e1;
             }
@@ -130,18 +157,21 @@
                 color: #ffd1dc;
             }
 
-            /* hồng ấm */
+            /* hồng ấm    */
             100% {
                 color: #ffc0cb;
             }
         }
 
         /* ----------------------------------
-            8. KEYFRAMES: TRÁI TIM ĐỎ RƠI
+        8. KEYFRAMES: TRÁI TIM ĐỎ RƠI TỪ NGOÀI TRỜI
+        — X, Z cố định, chỉ Y thay đổi từ -150vh → +150vh
     ---------------------------------- */
         @keyframes fallHeart {
             0% {
-                transform: translate3d(0, 0, var(--init-z)) scale(1);
+                transform: translate3d(var(--init-x),
+                        -150vh,
+                        var(--init-z)) scale(1);
                 opacity: 1;
             }
 
@@ -150,7 +180,9 @@
             }
 
             100% {
-                transform: translate3d(0, 110vh, var(--init-z)) scale(0.5);
+                transform: translate3d(var(--init-x),
+                        150vh,
+                        var(--init-z)) scale(0.5);
                 opacity: 0;
             }
         }
@@ -158,18 +190,18 @@
 </head>
 
 <body>
+    <!-- Khung chứa toàn bộ các phần tử 3D -->
     <div class="scene" id="scene"></div>
 
     <script>
         /* ----------------------------------
-            1. MẢNG CHỨ VÀ TRÁI TIM
+            1. MẢNG CHỮ VÀ TRÁI TIM
         ---------------------------------- */
         const words = [
             "Yêu em mãi mãi",
             "Anh nhớ em",
-            "Đừng nói là 5 năm, 10 năm hay 20 năm, anh cũng sẽ không quên em",
+            "Đừng nói 5 năm, 10 năm hay 20 năm, anh cũng không quên em",
             "Anh nhớ em từng giây",
-            "Sin",
             "Trái tim anh chỉ có em",
             "Gửi trái tim này cho em",
             "Em là cuộc sống của anh",
@@ -193,8 +225,14 @@
         let screenWidth = window.innerWidth;
         let screenHeight = window.innerHeight;
 
+        /* Hàm lấy giá trị random trong khoảng [min, max] */
+        function randomBetween(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
         /* ----------------------------------
-            2. TẠO MỘT CHỮ RƠI
+            2. TẠO MỘT CHỮ RƠI (toạ độ X, Z ngẫu nhiên)
+            — Chỉ rơi thẳng theo trục Y trong 3D
         ---------------------------------- */
         function createFallingWord() {
             const text = words[Math.floor(Math.random() * words.length)];
@@ -202,46 +240,52 @@
             el.classList.add("falling-item", "falling-word");
             el.textContent = text;
 
-            // Chọn độ sâu Z ngẫu nhiên: từ -800 → +800
-            const initZ = Math.random() * 1600 - 800;
+            // 2.1. Độ sâu Z ngẫu nhiên: -1000 → +1000
+            const initZ = randomBetween(-1000, 1000);
             el.style.setProperty('--init-z', `${initZ}px`);
 
-            // Tính vị trí X sao cho không bị tràn ra mép
-            const approxWidth = text.length * 16; // ước tính 16px mỗi ký tự
-            const randomX = Math.random() * (screenWidth - approxWidth);
-            el.style.left = `${randomX}px`;
+            // 2.2. Vị trí X ngẫu nhiên (tâm ở giữa .scene)
+            //      -> initX từ -screenWidth/2 → +screenWidth/2
+            const halfW = screenWidth / 2;
+            const approxWidth = text.length * 16; // ước tính: ~16px mỗi ký tự
+            // Để chữ không bị tràn khỏi biên khi nhìn thẳng, giảm đi chính yếu
+            const maxOffsetX = halfW - approxWidth / 2;
+            const initX = randomBetween(-maxOffsetX, +maxOffsetX);
+            el.style.setProperty('--init-x', `${initX}px`);
 
-            // Thời gian rơi: 3s → 5s
-            const duration = Math.random() * 2 + 3;
-            // Gán animation-duration cho cả hai animation (fallWord và colorCycle)
+            // 2.3. Thời gian rơi: 3s → 5s (tạo cảm giác ngẫu nhiên)
+            const duration = randomBetween(3, 5);
+            // Gán animation-duration: fallWord (chuyển Y) và colorCycle (chuyển màu)
             el.style.animationDuration = `${duration}s, ${duration}s`;
 
+            // Thêm vào DOM
             scene.appendChild(el);
 
-            // Xóa phần tử sau khi animation kết thúc (duration + 200ms)
+            // 2.4. Xóa phần tử sau khi animation kết thúc (duration + 200ms)
             setTimeout(() => {
                 if (scene.contains(el)) scene.removeChild(el);
             }, duration * 1000 + 200);
         }
 
         /* ----------------------------------
-            3. TẠO MỘT TRÁI TIM RƠI
+            3. TẠO MỘT TRÁI TIM RƠI (toạ độ X, Z ngẫu nhiên)
         ---------------------------------- */
         function createFallingHeart() {
             const el = document.createElement("div");
             el.classList.add("falling-item", "falling-heart");
             el.textContent = "❤️";
 
-            // Độ sâu Z ngẫu nhiên
-            const initZ = Math.random() * 1600 - 800;
+            // 3.1. Độ sâu Z ngẫu nhiên
+            const initZ = randomBetween(-1000, 1000);
             el.style.setProperty('--init-z', `${initZ}px`);
 
-            // Vị trí X ngẫu nhiên (giới hạn 30px rộng cho trái tim)
-            const randomX = Math.random() * (screenWidth - 30);
-            el.style.left = `${randomX}px`;
+            // 3.2. Vị trí X ngẫu nhiên (tâm giữa .scene), giới hạn để tim không vượt khung
+            const halfW = screenWidth / 2;
+            const initX = randomBetween(-halfW + 15, halfW - 15);
+            el.style.setProperty('--init-x', `${initX}px`);
 
-            // Thời gian rơi: 2.5s → 4s (hơi nhanh hơn chữ)
-            const duration = Math.random() * 1.5 + 2.5;
+            // 3.3. Thời gian rơi: 2.5s → 4s
+            const duration = randomBetween(2.5, 4);
             el.style.animationDuration = `${duration}s`;
 
             scene.appendChild(el);
@@ -252,10 +296,10 @@
         }
 
         /* ----------------------------------
-            4. KHỞI ĐỘNG RƠI & RƠI DÀNH CHO CHUỘT/TOUCH
+            4. XỬ LÝ KÉO (Mouse/Touch) ĐỂ XOAY SCENE
         ---------------------------------- */
-        let currentRotX = 20;  // Góc nghiêng X mặc định (20° nhìn xéo)
-        let currentRotY = 0;
+        let currentRotX = 15;   // Góc nghiêng X mặc định (15°)
+        let currentRotY = 20;   // Góc xoay Y mặc định (+20°: nhìn từ bên phải)
         let isDragging = false;
         let lastX = 0, lastY = 0;
 
@@ -268,6 +312,7 @@
             lastX = x;
             lastY = y;
         }
+
         function onPointerMove(x, y) {
             if (!isDragging) return;
             const deltaX = x - lastX;
@@ -285,64 +330,72 @@
 
             applySceneTransform();
         }
+
         function onPointerUp() {
             isDragging = false;
         }
 
+        /* ----------------------------------
+            5. KHỞI TẠO HIỆU ỨNG RƠI
+        ---------------------------------- */
         function startFalling() {
-            // Ban đầu tạo 80 chữ, mỗi chữ delay 100ms
-            for (let i = 0; i < 80; i++) {
+            // Ban đầu tạo 40 chữ, mỗi chữ delay 100ms
+            for (let i = 0; i < 40; i++) {
                 setTimeout(createFallingWord, i * 100);
             }
-            // Sau đó mỗi 100ms tạo thêm 1 chữ
-            setInterval(createFallingWord, 100);
+            // Sau đó mỗi 200ms tạo thêm 1 chữ mới
+            setInterval(createFallingWord, 200);
 
             // Ban đầu tạo 40 trái tim, mỗi trái tim delay 300ms
             for (let i = 0; i < 40; i++) {
                 setTimeout(createFallingHeart, i * 300);
             }
-            // Sau đó mỗi 500ms tạo thêm 1 trái tim
+            // Sau đó mỗi 500ms tạo thêm 1 trái tim mới
             setInterval(createFallingHeart, 500);
         }
 
-        // 1. Gắn sự kiện chuột
-        window.addEventListener("mousedown", (e) => {
-            onPointerDown(e.clientX, e.clientY);
-        });
-        window.addEventListener("mousemove", (e) => {
-            onPointerMove(e.clientX, e.clientY);
-        });
-        window.addEventListener("mouseup", () => {
-            onPointerUp();
-        });
-
-        // 2. Gắn sự kiện touch cho điện thoại
-        window.addEventListener("touchstart", (e) => {
-            if (e.touches.length === 1) {
-                const t = e.touches[0];
-                onPointerDown(t.clientX, t.clientY);
-            }
-        }, { passive: false });
-        window.addEventListener("touchmove", (e) => {
-            if (e.touches.length === 1) {
-                const t = e.touches[0];
-                onPointerMove(t.clientX, t.clientY);
-            }
-        }, { passive: false });
-        window.addEventListener("touchend", () => {
-            onPointerUp();
-        });
-
-        // 3. Cập nhật kích thước khi resize
-        window.addEventListener("resize", () => {
-            screenWidth = window.innerWidth;
-            screenHeight = window.innerHeight;
-        });
-
-        // 4. Khi trang load
+        /* ----------------------------------
+            6. GẮN SỰ KIỆN KHI BROWSER LOAD XONG
+        ---------------------------------- */
         window.addEventListener("load", () => {
-            applySceneTransform();  // Áp lại transform khởi tạo (20°,0°)
+            // Áp lại transform khởi tạo (15°, +20°)
+            applySceneTransform();
+            // Bắt đầu tạo chữ và trái tim rơi
             startFalling();
+
+            // Gắn sự kiện chuột
+            window.addEventListener("mousedown", e => {
+                onPointerDown(e.clientX, e.clientY);
+            });
+            window.addEventListener("mousemove", e => {
+                onPointerMove(e.clientX, e.clientY);
+            });
+            window.addEventListener("mouseup", () => {
+                onPointerUp();
+            });
+
+            // Gắn sự kiện touch cho điện thoại
+            window.addEventListener("touchstart", e => {
+                if (e.touches.length === 1) {
+                    const t = e.touches[0];
+                    onPointerDown(t.clientX, t.clientY);
+                }
+            }, { passive: false });
+            window.addEventListener("touchmove", e => {
+                if (e.touches.length === 1) {
+                    const t = e.touches[0];
+                    onPointerMove(t.clientX, t.clientY);
+                }
+            }, { passive: false });
+            window.addEventListener("touchend", () => {
+                onPointerUp();
+            });
+
+            // Cập nhật kích thước khi resize
+            window.addEventListener("resize", () => {
+                screenWidth = window.innerWidth;
+                screenHeight = window.innerHeight;
+            });
         });
     </script>
 </body>
