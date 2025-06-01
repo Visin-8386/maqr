@@ -242,21 +242,17 @@
 
             // 2.1. Độ sâu Z ngẫu nhiên: -1000 → +1000
             const initZ = randomBetween(-1000, 1000);
-            el.style.setProperty('--init-z', `${initZ}px`);
+            el.style.setProperty('--init-z', initZ + 'px');
 
-            // 2.2. Vị trí X ngẫu nhiên (tâm ở giữa .scene)
-            //      -> initX từ -screenWidth/2 → +screenWidth/2
+            // 2.2. Vị trí X ngẫu nhiên (tâm ở giữa .scene) — phủ kín toàn bộ chiều ngang
             const halfW = screenWidth / 2;
-            const approxWidth = text.length * 16; // ước tính: ~16px mỗi ký tự
-            // Để chữ không bị tràn khỏi biên khi nhìn thẳng, giảm đi chính yếu
-            const maxOffsetX = halfW - approxWidth / 2;
-            const initX = randomBetween(-maxOffsetX, +maxOffsetX);
-            el.style.setProperty('--init-x', `${initX}px`);
+            const initX = randomBetween(-halfW, +halfW);
+            el.style.setProperty('--init-x', initX + 'px');
 
             // 2.3. Thời gian rơi: 3s → 5s (tạo cảm giác ngẫu nhiên)
             const duration = randomBetween(3, 5);
             // Gán animation-duration: fallWord (chuyển Y) và colorCycle (chuyển màu)
-            el.style.animationDuration = `${duration}s, ${duration}s`;
+            el.style.animationDuration = duration + 's, ' + duration + 's';
 
             // Thêm vào DOM
             scene.appendChild(el);
@@ -277,16 +273,17 @@
 
             // 3.1. Độ sâu Z ngẫu nhiên
             const initZ = randomBetween(-1000, 1000);
-            el.style.setProperty('--init-z', `${initZ}px`);
+            el.style.setProperty('--init-z', initZ + 'px');
 
-            // 3.2. Vị trí X ngẫu nhiên (tâm giữa .scene), giới hạn để tim không vượt khung
+            // 3.2. Vị trí X ngẫu nhiên (tâm giữa .scene), giới hạn để tim không vượt quá màn hình
             const halfW = screenWidth / 2;
-            const initX = randomBetween(-halfW + 15, halfW - 15);
-            el.style.setProperty('--init-x', `${initX}px`);
+            const padding = 15; // để tim không sát mép
+            const initX = randomBetween(-halfW + padding, halfW - padding);
+            el.style.setProperty('--init-x', initX + 'px');
 
             // 3.3. Thời gian rơi: 2.5s → 4s
             const duration = randomBetween(2.5, 4);
-            el.style.animationDuration = `${duration}s`;
+            el.style.animationDuration = duration + 's';
 
             scene.appendChild(el);
 
@@ -301,7 +298,8 @@
         let currentRotX = 15;   // Góc nghiêng X mặc định (15°)
         let currentRotY = 20;   // Góc xoay Y mặc định (+20°: nhìn từ bên phải)
         let isDragging = false;
-        let lastX = 0, lastY = 0;
+        let lastX = 0,
+            lastY = 0;
 
         function applySceneTransform() {
             scene.style.transform = `rotateX(${currentRotX}deg) rotateY(${currentRotY}deg)`;
@@ -339,16 +337,16 @@
             5. KHỞI TẠO HIỆU ỨNG RƠI
         ---------------------------------- */
         function startFalling() {
-            // Ban đầu tạo 40 chữ, mỗi chữ delay 100ms
-            for (let i = 0; i < 40; i++) {
+            // Ban đầu tạo 50 chữ, mỗi chữ delay 100ms
+            for (let i = 0; i < 50; i++) {
                 setTimeout(createFallingWord, i * 100);
             }
             // Sau đó mỗi 200ms tạo thêm 1 chữ mới
             setInterval(createFallingWord, 200);
 
-            // Ban đầu tạo 40 trái tim, mỗi trái tim delay 300ms
-            for (let i = 0; i < 40; i++) {
-                setTimeout(createFallingHeart, i * 300);
+            // Ban đầu tạo 50 trái tim, mỗi trái tim delay 100ms
+            for (let i = 0; i < 50; i++) {
+                setTimeout(createFallingHeart, i * 100);
             }
             // Sau đó mỗi 500ms tạo thêm 1 trái tim mới
             setInterval(createFallingHeart, 500);
